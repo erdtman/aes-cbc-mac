@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/erdtman/aes-cbc-mac.svg?branch=master)](https://travis-ci.org/erdtman/aes-cbc-mac)
+[![Coverage Status](https://coveralls.io/repos/github/erdtman/aes-cbc-mac/badge.svg?branch=master)](https://coveralls.io/github/erdtman/aes-cbc-mac?branch=master)
 # aes-cbc-mac
 Node implementation for aes cbc mac.
 
