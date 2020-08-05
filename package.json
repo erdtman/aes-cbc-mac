@@ -1,6 +1,6 @@
 {
   "name": "aes-cbc-mac",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Node implementation for aes cbc mac",
   "main": "lib/index.js",
   "scripts": {
