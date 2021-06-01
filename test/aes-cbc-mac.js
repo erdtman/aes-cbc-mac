@@ -2,7 +2,7 @@
 /* jslint node: true */
 'use strict';
 const test = require('ava');
-const aesCbcMac = require('../');
+const aesCbcMac = require('../build/index');
 
 test('AES-MAC-128/64', (t) => {
   const msg = Buffer.from('84634D414343A1010E4054546869732069732074686520636F6E74656E742E', 'hex');
@@ -37,47 +37,7 @@ test('AES-MAC-256/128', (t) => {
 });
 
 test('AES-MAC invalid key lenght', (t) => {
-  try {
-    const msg = Buffer.from('84', 'hex');
-    const key = Buffer.from('849B57219DAE48DE646D07DBB533566E97668', 'hex');
-
-    aesCbcMac.create(key, msg, 16);
-    t.is(false); // Must not get here
-  } catch (error) {
-    t.is(error.message, 'Unsupported key length 18');
-  }
-});
-
-test('AES-MAC invalid key type', (t) => {
-  try {
-    const msg = Buffer.from('84', 'hex');
-
-    aesCbcMac.create('asdad', msg, 16);
-    t.is(false); // Must not get here
-  } catch (error) {
-    t.is(error.message, 'Key must be of type Buffer');
-  }
-});
-
-test('AES-MAC invlaid msg type', (t) => {
-  try {
-    const key = Buffer.from('84', 'hex');
-
-    aesCbcMac.create(key, 'asdf', 16);
-    t.is(false); // Must not get here
-  } catch (error) {
-    t.is(error.message, 'Msg must be of type Buffer');
-  }
-});
-
-test('AES-MAC invalid len', (t) => {
-  try {
-    const key = Buffer.from('84', 'hex');
-    const msg = Buffer.from('84', 'hex');
-
-    aesCbcMac.create(key, msg, 128);
-    t.is(false); // Must not get here
-  } catch (error) {
-    t.is(error.message, 'Len must be 8 or 16');
-  }
+  const msg = Buffer.from('84', 'hex');
+  const key = Buffer.from('849B57219DAE48DE646D07DBB533566E97668', 'hex');
+  t.throws(() => aesCbcMac.create(key, msg, 16));
 });

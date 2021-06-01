@@ -4,7 +4,7 @@
   "description": "Node implementation for aes cbc mac",
   "main": "lib/index.js",
   "scripts": {
-    "pretest": "semistandard --fix",
+    "pretest": "semistandard --fix && tsc",
     "coverage": "nyc npm test",
     "coveragehtml": "nyc report -r html",
     "precoveragehtml": "npm run coverage",
@@ -29,9 +29,11 @@
   },
   "homepage": "https://github.com/erdtman/aes-cbc-mac#readme",
   "devDependencies": {
+    "@types/node": "^15.6.1",
     "ava": "*",
     "npm-run-all": "*",
     "nyc": "*",
-    "semistandard": "*"
+    "semistandard": "*",
+    "typescript": "^4.3.2"
   }
 }

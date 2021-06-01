@@ -1,5 +1,5 @@
 
-const aesCbcMac = require('../');
+const aesCbcMac = require('../lib');
 
 const message = 'Important message';
 const key = Buffer.from('849B57219DAE48DE646D07DBB533566E', 'hex');
