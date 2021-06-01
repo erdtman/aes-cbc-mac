@@ -35,5 +35,8 @@
     "nyc": "*",
     "semistandard": "*",
     "typescript": "^4.3.2"
+  },
+  "dependencies": {
+    "isomorphic-webcrypto": "^2.3.8"
   }
 }
