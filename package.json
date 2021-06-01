@@ -1,8 +1,8 @@
 {
   "name": "aes-cbc-mac",
   "version": "1.0.0",
-  "description": "Node implementation for aes cbc mac",
-  "main": "lib/index.js",
+  "description": "Typescript implementation for aes cbc mac",
+  "main": "build/index.js",
   "scripts": {
     "pretest": "semistandard --fix && tsc",
     "coverage": "nyc npm test",
