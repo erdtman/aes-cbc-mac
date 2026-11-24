@@ -1,15 +1,17 @@
 {
   "name": "aes-cbc-mac",
-  "version": "1.0.1",
-  "description": "Node implementation for aes cbc mac",
+  "version": "1.1.0",
+  "description": "AES-CBC-MAC for Node, as used by COSE AES-MAC",
   "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "pretest": "semistandard --fix",
-    "coverage": "nyc npm test",
-    "coveragehtml": "nyc report -r html",
-    "precoveragehtml": "npm run coverage",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls",
-    "test": "ava test/aes-cbc-mac.js"
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage"
   },
   "repository": {
     "type": "git",
@@ -20,18 +22,13 @@
     "cbc",
     "aes",
     "mac",
-    "crypto"
+    "crypto",
+    "cose"
   ],
   "author": "Samuel Erdtman",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/erdtman/aes-cbc-mac/issues"
   },
-  "homepage": "https://github.com/erdtman/aes-cbc-mac#readme",
-  "devDependencies": {
-    "ava": "*",
-    "npm-run-all": "*",
-    "nyc": "*",
-    "semistandard": "*"
-  }
+  "homepage": "https://github.com/erdtman/aes-cbc-mac#readme"
 }
