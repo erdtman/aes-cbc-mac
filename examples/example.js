@@ -1,9 +1,11 @@
+'use strict';
 
 const aesCbcMac = require('../');
 
-const message = 'Important message';
 const key = Buffer.from('849B57219DAE48DE646D07DBB533566E', 'hex');
-const hashLen = 8; // bytes, 64 bits
-const hash = aesCbcMac.create(message, key, hashLen);
+const message = Buffer.from('Important message', 'utf8');
+const tagLength = 8; // bytes, so a 64 bit tag
 
-console.log(hash);
+const tag = aesCbcMac.create(key, message, tagLength);
+
+console.log(`tag: ${tag.toString('hex')}`);
