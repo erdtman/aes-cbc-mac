@@ -3,7 +3,7 @@
 # aes-cbc-mac
 
 AES-CBC-MAC for Node, as used by the COSE `AES-MAC` algorithms
-([RFC 9052 section 3.2](https://www.rfc-editor.org/rfc/rfc9052.html#section-3.2)).
+([RFC 9053 section 3.2](https://www.rfc-editor.org/rfc/rfc9053.html#section-3.2)).
 
 Node's `crypto` module has no CBC-MAC of its own, so this package builds one on
 top of `crypto`'s AES-CBC: the message is zero-padded to a whole number of AES
@@ -68,15 +68,19 @@ const ok = received.length === expected.length &&
 
 ## Security Considerations
 
+Quoted from [RFC 9053 section 3.2.1](https://www.rfc-editor.org/rfc/rfc9053.html#section-3.2.1).
+"The current structure" is the COSE `MAC_structure` that the caller builds and
+passes in as `msg`, not anything this package constructs.
+
 A number of attacks exist against Cipher Block Chaining Message Authentication
 Code (CBC-MAC) that need to be considered.
 
 * A single key must only be used for messages of a fixed and known length. If
   this is not the case, an attacker will be able to generate a message with a
   valid tag given two message and tag pairs. This can be addressed by using
-  different keys for messages of different lengths. COSE mitigates this problem,
-  as the structure it builds and authenticates encodes the lengths.
-  (CMAC also addresses this issue.)
+  different keys for messages of different lengths. The current structure
+  mitigates this problem, as a specific encoding structure that includes lengths
+  is built and signed. (CMAC also addresses this issue.)
 * In Cipher Block Chaining (CBC) mode, if the same key is used for both
   encryption and authentication operations, an attacker can produce messages
   with a valid authentication code.
