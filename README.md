@@ -104,6 +104,11 @@ things are worth knowing when upgrading:
 * **Argument errors are now `TypeError`s** rather than plain `Error`s, with the
   messages unchanged. `TypeError` is an `Error`, so `catch` blocks and
   `error.message` checks keep working.
+* **The returned tag is a copy, not a view.** 1.0.1 returned a `Buffer` that
+  shared memory with the full MAC, so for a 64 bit tag the 8 bytes truncation
+  discards — and whatever else sat nearby in Node's shared buffer pool — stayed
+  reachable through `tag.buffer`. The tag now has an `ArrayBuffer` of its own,
+  so `tag.byteOffset` is `0` and `tag.buffer.byteLength` equals `tag.length`.
 * **The dev toolchain is gone.** Tests run on Node's built-in `node:test`
   runner, and the package has no dependencies at all, runtime or dev.
 

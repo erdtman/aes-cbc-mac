@@ -41,6 +41,15 @@ test('the tag is the requested length, and the 64 bit tag is a prefix of the 128
   assert.deepEqual(short, long.subarray(0, 8));
 });
 
+test('the tag shares no memory with the full MAC or the buffer pool', () => {
+  const msg = Buffer.from('546865206D657373616765', 'hex');
+  const tag = aesCbcMac.create(key128, msg, 8);
+  // Returned as a view, tag.buffer would expose the 8 discarded bytes of the
+  // 128 bit MAC, and whatever else sits nearby in Node's shared buffer pool.
+  assert.equal(tag.byteOffset, 0);
+  assert.equal(tag.buffer.byteLength, tag.length);
+});
+
 test('the same key and message always give the same tag', () => {
   const msg = Buffer.from('546865206D657373616765', 'hex');
   assert.deepEqual(aesCbcMac.create(key128, msg, 16), aesCbcMac.create(key128, msg, 16));
