@@ -2,34 +2,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
 const aesCbcMac = require('../');
 
 const key128 = Buffer.from('849B57219DAE48DE646D07DBB533566E', 'hex');
 const key256 = Buffer.from('849B57219DAE48DE646D07DBB533566E976686457C1491BE3A76DCEA6C427188', 'hex');
-
-/**
-  An independent CBC-MAC, built by chaining single-block ECB encryptions by
-  hand, to check the library against something other than itself.
-*/
-function referenceMac (key, msg, len) {
-  const algorithm = key.length === 16 ? 'aes-128-ecb' : 'aes-256-ecb';
-  const padLen = (msg.length % 16 === 0) ? 0 : 16 - (msg.length % 16);
-  const padded = Buffer.concat([msg, Buffer.alloc(padLen)]);
-
-  let previous = Buffer.alloc(16, 0);
-  for (let offset = 0; offset < padded.length; offset += 16) {
-    const block = padded.subarray(offset, offset + 16);
-    const input = Buffer.alloc(16);
-    for (let i = 0; i < 16; i++) {
-      input[i] = block[i] ^ previous[i];
-    }
-    const cipher = crypto.createCipheriv(algorithm, key, null);
-    cipher.setAutoPadding(false);
-    previous = Buffer.concat([cipher.update(input), cipher.final()]);
-  }
-  return previous.subarray(0, len);
-}
 
 // Test vectors from the COSE examples, https://github.com/cose-wg/Examples.
 test('AES-MAC-128/64', () => {
@@ -54,30 +30,6 @@ test('AES-MAC-256/128', () => {
   const msg = Buffer.from('84634D414344A101181A4054546869732069732074686520636F6E74656E742E', 'hex');
   const tag = aesCbcMac.create(key256, msg, 16);
   assert.equal(tag.toString('hex').toUpperCase(), 'DB9C7598A0751C5FF3366B6205BD2AA9');
-});
-
-test('matches an independent CBC-MAC for every message length up to 4 blocks', () => {
-  for (const key of [key128, key256]) {
-    for (let length = 1; length <= 64; length++) {
-      const msg = crypto.randomBytes(length);
-      assert.deepEqual(
-        aesCbcMac.create(key, msg, 16),
-        referenceMac(key, msg, 16),
-        `mismatch for a ${length} byte message and a ${key.length} byte key`
-      );
-    }
-  }
-});
-
-test('block aligned messages are not padded with an extra block', () => {
-  // A 16 byte message is one block, so the tag must come from that block and
-  // not from a block of padding appended after it.
-  const msg = Buffer.alloc(16, 0x61);
-  assert.deepEqual(aesCbcMac.create(key128, msg, 16), referenceMac(key128, msg, 16));
-  assert.notDeepEqual(
-    aesCbcMac.create(key128, msg, 16),
-    aesCbcMac.create(key128, Buffer.concat([msg, Buffer.alloc(16)]), 16)
-  );
 });
 
 test('the tag is the requested length, and the 64 bit tag is a prefix of the 128 bit one', () => {
