@@ -20,6 +20,10 @@ npm install aes-cbc-mac
 
 Requires Node 18 or later.
 
+TypeScript declarations ship with the package, so there is no
+`@types/aes-cbc-mac` to install. They use `Buffer`, so `@types/node` needs to be
+present.
+
 ## Usage
 
 ```javascript
@@ -44,7 +48,9 @@ console.log(tag.toString('hex'));
 | `msg`    | `Buffer` | at least one byte                                      |
 | `len`    | `number` | `8` for a 64 bit tag, `16` for a 128 bit tag           |
 
-Returns a `Buffer` holding the tag, `len` bytes long. The four combinations of
+Returns a `Buffer` holding the tag, `len` bytes long. In TypeScript `len` is
+typed as `TagLength`, which is `8 | 16`, so a `len` computed as a plain `number`
+needs narrowing or a cast. The four combinations of
 key and tag length are exactly the COSE `AES-MAC-128/64`, `AES-MAC-128/128`,
 `AES-MAC-256/64` and `AES-MAC-256/128` algorithms. AES-192 keys are not
 supported, as COSE does not define an `AES-MAC` algorithm for them.
