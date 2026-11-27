@@ -10,6 +10,14 @@ top of `crypto`'s AES-CBC: the message is zero-padded to a whole number of AES
 blocks, encrypted in CBC mode under an all-zero IV, and the tag is the leading
 bytes of the last ciphertext block.
 
+RFC 9053 fixes the IV and the key and tag lengths, but states no padding rule of
+its own; it defines AES-CBC-MAC only as "the instantiation of the CBC-MAC
+construction (defined in [MAC]) using AES as the block cipher". The zero padding
+above is what the [COSE example vectors](https://github.com/cose-wg/Examples)
+require, and it is what the tests check against. It has a consequence worth
+reading before using this for anything but COSE: see
+[Zero padding is not injective](#zero-padding-is-not-injective).
+
 No dependencies, nothing to compile.
 
 ## Installation
@@ -59,20 +67,61 @@ Anything else throws: a `TypeError` for a key or message that is not a `Buffer`,
 an unsupported key length or an unsupported tag length, and a `RangeError` for
 an empty message.
 
-Verifying a tag means recomputing it and comparing. Compare with
-[`crypto.timingSafeEqual`](https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b)
-rather than `Buffer.equals`, so the comparison does not leak how much of a
-forged tag was correct:
+### `verify(key, msg, tag, len)`
+
+| argument | type     | accepted values                                        |
+| -------- | -------- | ------------------------------------------------------ |
+| `key`    | `Buffer` | 16 bytes for AES-128, 32 bytes for AES-256             |
+| `msg`    | `Buffer` | at least one byte                                      |
+| `tag`    | `Buffer` | the tag to check, any length                           |
+| `len`    | `number` | the tag length the algorithm requires, `8` or `16`     |
+
+Returns `true` if `tag` is the `len` byte AES-CBC-MAC of `msg` under `key`. The
+comparison uses
+[`crypto.timingSafeEqual`](https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b),
+so it does not leak how much of a forged tag was correct.
 
 ```javascript
-const crypto = require('node:crypto');
-
-const expected = aesCbcMac.create(key, message, received.length);
-const ok = received.length === expected.length &&
-  crypto.timingSafeEqual(received, expected);
+if (!aesCbcMac.verify(key, message, receivedTag, 8)) {
+  throw new Error('Tag mismatch');
+}
 ```
 
+`len` is the length the algorithm in use calls for, not the length of the tag
+that arrived, and a `tag` of any other length fails verification. Taking the
+length from `tag` instead would be a downgrade: the 64 bit tag is a prefix of
+the 128 bit one, so an attacker could answer an `AES-MAC-128/128` challenge with
+an 8 byte tag of their own and have it accepted, which is a 2^64 forgery rather
+than a 2^128 one.
+
+`key`, `msg` and `len` are the caller's own, so a bad one throws exactly as it
+does in `create`. The tag comes from whoever is being authenticated, so a `tag`
+of the wrong length returns `false` rather than throwing — a remote peer should
+not be able to raise an exception in the verifier by sending a short tag. A
+`tag` that is not a `Buffer` is still a `TypeError`.
+
 ## Security Considerations
+
+### Zero padding is not injective
+
+Messages that differ only in trailing zero bytes within the final block get the
+same tag, because zero-padding both of them produces the same input:
+
+```javascript
+const a = aesCbcMac.create(key, Buffer.from([1]), 16);
+const b = aesCbcMac.create(key, Buffer.from([1, 0]), 16);
+a.equals(b); // true
+```
+
+So a caller that MACs raw bytes under a single key is forgeable: observing the
+tag for `m` gives a valid tag for `m` followed by up to a block of zeros. The
+COSE `MAC_structure` is a CBOR array whose encoding carries the length of every
+element, which removes the ambiguity for COSE use. A caller MACing anything else
+needs its own length framing, or a MAC without this property such as
+[`crypto.createHmac`](https://nodejs.org/api/crypto.html#cryptocreatehmacalgorithm-key-options)
+or AES-CMAC.
+
+### From RFC 9053
 
 Quoted from [RFC 9053 section 3.2.1](https://www.rfc-editor.org/rfc/rfc9053.html#section-3.2.1).
 "The current structure" is the COSE `MAC_structure` that the caller builds and
@@ -81,7 +130,7 @@ passes in as `msg`, not anything this package constructs.
 A number of attacks exist against Cipher Block Chaining Message Authentication
 Code (CBC-MAC) that need to be considered.
 
-* A single key must only be used for messages of a fixed and known length. If
+* A single key must only be used for messages of a fixed or known length. If
   this is not the case, an attacker will be able to generate a message with a
   valid tag given two message and tag pairs. This can be addressed by using
   different keys for messages of different lengths. The current structure
@@ -93,9 +142,28 @@ Code (CBC-MAC) that need to be considered.
 * If the IV can be modified, then messages can be forged. This is addressed by
   fixing the IV to all zeros.
 
+## Changes in 1.2.0
+
+Tags are unchanged, and nothing that worked in 1.1.0 stops working.
+
+* **A `verify` function.** It compares in constant time and takes the required
+  tag length explicitly, so callers no longer hand-roll a `timingSafeEqual`
+  against a tag whose length an attacker chose. See
+  [`verify`](#verifykey-msg-tag-len).
+* **Zero-padding ambiguity is documented**, under
+  [Security Considerations](#zero-padding-is-not-injective). The behaviour is
+  unchanged — it is a property of CBC-MAC with zero padding — but it was not
+  written down before.
+* **The key length check no longer reads from `Object.prototype`.** The lookup
+  from key length to AES variant was a plain object, so prototype pollution
+  elsewhere in the process could slip an undefined key length past it. It is a
+  `Map` now.
+* **The padded plaintext no longer lands in Node's shared buffer pool**, and the
+  plaintext copy and the untruncated MAC are cleared before `create` returns.
+
 ## Changes in 1.1.0
 
-Tags are unchanged — every byte this version produces matches 1.0.1 — but three
+Tags are unchanged — every byte this version produces matches 1.0.1 — but four
 things are worth knowing when upgrading:
 
 * **An empty message now throws a `RangeError`.** 1.0.1 returned a zero-length
