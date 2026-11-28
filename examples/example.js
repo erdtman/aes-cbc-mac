@@ -9,3 +9,7 @@ const tagLength = 8; // bytes, so a 64 bit tag
 const tag = aesCbcMac.create(key, message, tagLength);
 
 console.log(`tag: ${tag.toString('hex')}`);
+
+if (aesCbcMac.verify(key, message, tag, tagLength)) {
+  console.log('tag verified');
+}
